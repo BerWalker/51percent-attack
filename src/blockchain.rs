@@ -22,7 +22,9 @@ impl Blockchain {
     /// Creates the genesis (first) block and adds it to the chain
     fn create_genesis_block(&mut self) {
         let genesis_block = Block::new(0, "0", "Genesis Block");
-        self.chain.push(genesis_block);
+        let mut genesis_mine_block = genesis_block;
+        genesis_mine_block.mine_block(self.difficulty);
+        self.chain.push(genesis_mine_block);
     }
 
     /// Adds a new block to the blockchain
