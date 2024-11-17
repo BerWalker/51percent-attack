@@ -55,6 +55,13 @@ impl Block {
     }
 }
 
+impl PartialEq for Block {
+    fn eq(&self, other: &Self) -> bool {
+        // Definindo que dois blocos são iguais se eles tiverem o mesmo hash
+        self.hash == other.hash
+    }
+}
+
 /// Custom Debug output for Block
 impl fmt::Debug for Block {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -2,7 +2,7 @@ use crate::block::Block;  // Importing Block struct
 use std::vec::Vec;
 
 /// Blockchain struct representing the entire chain of blocks
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Blockchain {
     pub chain: Vec<Block>,  // Vector of blocks forming the blockchain
     pub difficulty: usize,   // Difficulty for mining (number of leading zeros in the hash)
