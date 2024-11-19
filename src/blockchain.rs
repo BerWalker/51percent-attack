@@ -48,21 +48,26 @@ impl Blockchain {
 
             // Validate the previous hash of the current block matches the hash of the previous block.
             if current_block.previous_hash != previous_block.hash {
+                println!("\nBlockchain invalid: Block {} has an incorrect previous hash.", i);
                 return false;  // Invalid blockchain: mismatched previous hash
             }
 
             // Validate the current block's hash is correctly calculated.
             if current_block.hash != current_block.calculate_hash() {
+                println!("\nBlockchain invalid: Block {} has an incorrect hash.", i);
                 return false;  // Invalid blockchain: incorrect block hash
             }
 
             // Validate the current block's hash meets the required difficulty.
             if !current_block.get_hash().starts_with(&"0".repeat(self.difficulty)) {
+                println!("\nBlockchain invalid: Block {}'s hash does not meet the required difficulty.", i);
                 return false;  // Invalid blockchain: hash does not meet difficulty
             }
         }
+        println!("Blockchain is valid: All blocks are correctly linked and meet the difficulty requirements.");
         true  // Blockchain is valid
     }
+
 
     /// Prints the entire blockchain.
     pub fn print_chain(&self) {

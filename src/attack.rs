@@ -80,18 +80,12 @@ pub fn simulate_51_attack() {
     let original_chain = original_chain.lock().unwrap();
     let attacker_chain = attacker_chain.lock().unwrap();
 
-    if original_chain.is_valid() {
-        println!("\nOriginal Chain is valid:");
-    } else {
-        println!("\nOriginal Chain is not valid:");
-    }
+    println!("\nOriginal Chain: {} Blocks", original_chain.chain.len());
+    original_chain.is_valid();
     original_chain.print_chain();
 
-    if attacker_chain.is_valid() {
-        println!("\nAttacker Chain is valid:");
-    } else {
-        println!("\nAttacker Chain is not valid:");
-    }
+    println!("\nAttacker Chain: {} Blocks", attacker_chain.chain.len());
+    attacker_chain.is_valid();
     attacker_chain.print_chain();
 
     // Determine which chain is now considered valid based on length.
