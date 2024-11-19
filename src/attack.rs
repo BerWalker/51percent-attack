@@ -1,62 +1,100 @@
 use crate::blockchain::Blockchain;
-use std::{sync::{Arc, Mutex}, thread, time};
+use std::{
+    sync::{Arc, Mutex, atomic::{AtomicBool, Ordering}},
+    thread,
+    time,
+};
 
+/// Simulates a 51% attack
 pub fn simulate_51_attack() {
     let difficulty = 4;
     let mut original_chain = Blockchain::new(difficulty);
 
-    // Adding 5 legitimate blocks to the original chain
+    // Adding 5 legitimate blocks to the original chain.
     for i in 1..=5 {
         original_chain.add_block(&format!("Transaction {}", i));
     }
 
-    // Cloning the original chain for the attacker's chain
+    // Cloning the original chain to create the attacker's fork.
     let attacker_chain = original_chain.clone();
 
-    // Wrapping both chains in Arc<Mutex> for safe access by multiple threads
+    // Wrapping both chains in `Arc<Mutex>` for safe access by multiple threads.
     let original_chain = Arc::new(Mutex::new(original_chain));
     let attacker_chain = Arc::new(Mutex::new(attacker_chain));
 
-    // Creating threads to mine blocks simultaneously
-    let original_chain_thread = thread::spawn({
+    // Atomic flag to signal when the attack has succeeded.
+    let stop_flag = Arc::new(AtomicBool::new(false));
+
+    // Thread simulating legitimate mining on the original chain.
+    let original_chain_thread = {
         let original_chain = Arc::clone(&original_chain);
-        move || {
-            for i in 6..=10 {
-                let mut chain = original_chain.lock().unwrap();
-                chain.add_block(&format!("Original Transaction {}", i));
-                println!("Legitimate: Mining Block {}", i);
-                thread::sleep(time::Duration::from_secs(1)); // Simulates mining time
-            }
-        }
-    });
+        let stop_flag = Arc::clone(&stop_flag);
 
-    let attacker_chain_thread = thread::spawn({
+        thread::spawn(move || {
+            let mut i = 1;
+            while !stop_flag.load(Ordering::Relaxed) {
+                {
+                    let mut chain = original_chain.lock().unwrap();
+                    chain.add_block(&format!("Original Transaction {}", i));
+                    println!("Legitimate: Mining Block {}", i);
+                }
+                thread::sleep(time::Duration::from_secs(1));
+                i += 1;
+            }
+        })
+    };
+
+    // Thread simulating malicious mining on the attacker's chain.
+    let attacker_chain_thread = {
         let attacker_chain = Arc::clone(&attacker_chain);
-        move || {
-            for i in 6..=12 {
-                let mut chain = attacker_chain.lock().unwrap();
-                chain.add_block(&format!("Malicious Transaction {}", i));
-                println!("Attack: Mining Block {}", i);
-                thread::sleep(time::Duration::from_secs(1)); // Simulates mining time
-            }
-        }
-    });
+        let original_chain = Arc::clone(&original_chain);
+        let stop_flag = Arc::clone(&stop_flag);
 
-    // Waiting for both threads to finish mining
+        thread::spawn(move || {
+            let mut i = 1;
+            while !stop_flag.load(Ordering::Relaxed) {
+                {
+                    let mut attacker = attacker_chain.lock().unwrap();
+                    attacker.add_block(&format!("Malicious Transaction {}", i));
+                    println!("Attack: Mining Block {}", i);
+                }
+                {
+                    let attacker = attacker_chain.lock().unwrap();
+                    let original = original_chain.lock().unwrap();
+
+                    // Check if the attacker's chain is longer.
+                    if attacker.chain.len() > original.chain.len() + 1 {
+                        stop_flag.store(true, Ordering::Relaxed);
+                    }
+                }
+                i += 1;
+            }
+        })
+    };
+
+    // Wait for both threads to complete.
     original_chain_thread.join().unwrap();
     attacker_chain_thread.join().unwrap();
 
-    // Accessing and printing both chains after mining
+    // Access and print both chains after mining.
     let original_chain = original_chain.lock().unwrap();
     let attacker_chain = attacker_chain.lock().unwrap();
 
-    println!("\nOriginal Chain");
+    if original_chain.is_valid() {
+        println!("\nOriginal Chain is valid:");
+    } else {
+        println!("\nOriginal Chain is not valid:");
+    }
     original_chain.print_chain();
 
-    println!("\nAttacker Chain");
+    if attacker_chain.is_valid() {
+        println!("\nAttacker Chain is valid:");
+    } else {
+        println!("\nAttacker Chain is not valid:");
+    }
     attacker_chain.print_chain();
 
-    // Checking which chain is longer and thus valid
+    // Determine which chain is now considered valid based on length.
     if attacker_chain.chain.len() > original_chain.chain.len() {
         println!("\nThe attacker's fork has become the valid chain!");
 
