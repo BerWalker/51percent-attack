@@ -4,10 +4,34 @@ use std::{
     thread,
     time,
 };
+use rand::Rng;
+
+/// Function to generate random transactions with two participants and a random amount.
+fn generate_random_transaction() -> String {
+    // List of generic names for the participants.
+    let names = vec!["Alice", "Bob", "Grace", "Eve", "Charlie", "Dave"];
+
+    // Generate two different random indices to select two people from the list.
+    let mut rng = rand::thread_rng();
+    let sender_index = rng.gen_range(0..names.len());
+    let mut receiver_index = rng.gen_range(0..names.len());
+
+    // Ensure that the sender and the receiver are different
+    while sender_index == receiver_index {
+        receiver_index = rng.gen_range(0..names.len());
+    }
+
+    let sender = names[sender_index];
+    let receiver = names[receiver_index];
+
+    // Generate a random transfer amount between 0.001 and 10.0
+    let amount: f64 = rng.gen_range(0.001..=10.0);
+
+    format!("{} is transferring {:.3} BTC to {}", sender, amount, receiver)
+}
 
 /// Simulates a 51% attack
-pub fn simulate_51_attack() {
-    let difficulty = 4;
+pub fn simulate_51_attack(difficulty: usize) {
     let mut original_chain = Blockchain::new(difficulty);
 
     // Adding 5 legitimate blocks to the original chain.
@@ -33,13 +57,14 @@ pub fn simulate_51_attack() {
         thread::spawn(move || {
             let mut i = 1;
             while !stop_flag.load(Ordering::Relaxed) {
+                let transaction = generate_random_transaction();
                 {
                     let mut chain = original_chain.lock().unwrap();
-                    chain.add_block(&format!("Original Transaction {}", i));
+                    chain.add_block(&transaction);
                     println!("Legitimate: Mining Block {}", i);
                 }
-                thread::sleep(time::Duration::from_secs(1));
                 i += 1;
+                thread::sleep(time::Duration::from_secs(difficulty as u64 * difficulty as u64));
             }
         })
     };
@@ -53,26 +78,34 @@ pub fn simulate_51_attack() {
         thread::spawn(move || {
             let mut i = 1;
             while !stop_flag.load(Ordering::Relaxed) {
+                let transaction = generate_random_transaction();
                 {
                     let mut attacker = attacker_chain.lock().unwrap();
-                    attacker.add_block(&format!("Malicious Transaction {}", i));
+                    attacker.add_block(&transaction);
                     println!("Attack: Mining Block {}", i);
                 }
+
+                // Check if the attacker's chain is longer.
+                let attacker_len;
+                let original_len;
                 {
                     let attacker = attacker_chain.lock().unwrap();
                     let original = original_chain.lock().unwrap();
-
-                    // Check if the attacker's chain is longer.
-                    if attacker.chain.len() > original.chain.len() + 1 {
-                        stop_flag.store(true, Ordering::Relaxed);
-                    }
+                    attacker_len = attacker.chain.len();
+                    original_len = original.chain.len();
                 }
+
+                if attacker_len > original_len + 1 {
+                    stop_flag.store(true, Ordering::Relaxed);
+                }
+
                 i += 1;
+                thread::sleep(time::Duration::from_secs(difficulty as u64));
             }
         })
     };
 
-    // Wait for both threads to complete.
+    // Wait for both threads to finish.
     original_chain_thread.join().unwrap();
     attacker_chain_thread.join().unwrap();
 
@@ -106,7 +139,6 @@ pub fn simulate_51_attack() {
                 println!("Transaction: {}", block.data);
             }
         }
-
     } else {
         println!("\nThe original chain remains valid.");
     }
