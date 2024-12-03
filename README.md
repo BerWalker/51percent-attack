@@ -78,7 +78,7 @@ cargo build --release
 Run the 51% attack simulator with the following command:
 
 ```bash
-cargo run
+cargo run <difficulty> // default 4
 ```
 
 This will start the 51% attack simulation, showing the mining of both the legitimate and attacking chains and checking which one eventually becomes the valid chain.
@@ -89,51 +89,41 @@ The program will print the following details during execution:
 
 - The progress of mining legitimate and malicious blocks.
 ```
-Legitimate: Mining Block 1
 Attack: Mining Block 1
-Legitimate: Mining Block 2
+Legitimate: Mining Block 1
 Attack: Mining Block 2
 Attack: Mining Block 3
-Legitimate: Mining Block 3
-Attack: Mining Block 4
-Attack: Mining Block 5
 ```
 - The validity status of both blockchains after the simulation.
 ```
-Original Chain: 9 Blocks
+Original Chain: 7 Blocks
 Blockchain is valid: All blocks are correctly linked and meet the difficulty requirements.
-Block 0 [Data: Genesis Block, Hash: 0000051106b2bd7c, Previous Hash: 0, Timestamp: 2024-11-19T23:09:18.103]
-Block 1 [Data: Transaction 1, Hash: 0000324cdafa6b82, Previous Hash: 0000051106b2bd7c, Timestamp: 2024-11-19T23:09:18.638]
-Block 2 [Data: Transaction 2, Hash: 0000c6dff6bb7a3a, Previous Hash: 0000324cdafa6b82, Timestamp: 2024-11-19T23:09:19.363]
-Block 3 [Data: Transaction 3, Hash: 000032777ad88572, Previous Hash: 0000c6dff6bb7a3a, Timestamp: 2024-11-19T23:09:20.128]
-Block 4 [Data: Transaction 4, Hash: 00001c7bde629153, Previous Hash: 000032777ad88572, Timestamp: 2024-11-19T23:09:21.563]
-Block 5 [Data: Transaction 5, Hash: 00003222c2a04145, Previous Hash: 00001c7bde629153, Timestamp: 2024-11-19T23:09:21.912]
-Block 6 [Data: Original Transaction 1, Hash: 0000a7cef6301f06, Previous Hash: 00003222c2a04145, Timestamp: 2024-11-19T23:09:22.151]
-Block 7 [Data: Original Transaction 2, Hash: 00005135c58d71d3, Previous Hash: 0000a7cef6301f06, Timestamp: 2024-11-19T23:09:24.139]
-Block 8 [Data: Original Transaction 3, Hash: 0000d07662932bc7, Previous Hash: 00005135c58d71d3, Timestamp: 2024-11-19T23:09:28.357]
+Block 0 [Data: Genesis Block, Hash: 000050bea341966f, Previous Hash: 0, Timestamp: 2024-12-02T04:46:40.143]
+Block 1 [Data: Transaction 1, Hash: 0000b865ae269a2e, Previous Hash: 000050bea341966f, Timestamp: 2024-12-02T04:46:40.804]
+Block 2 [Data: Transaction 2, Hash: 0000f4f6928be726, Previous Hash: 0000b865ae269a2e, Timestamp: 2024-12-02T04:46:41.496]
+Block 3 [Data: Transaction 3, Hash: 00002a374863fdcd, Previous Hash: 0000f4f6928be726, Timestamp: 2024-12-02T04:46:41.608]
+Block 4 [Data: Transaction 4, Hash: 00001032b4bb5715, Previous Hash: 00002a374863fdcd, Timestamp: 2024-12-02T04:46:42.031]
+Block 5 [Data: Transaction 5, Hash: 000066660d103243, Previous Hash: 00001032b4bb5715, Timestamp: 2024-12-02T04:46:47.166]
+Block 6 [Data: Dave is transferring 2.808 BTC to Eve, Hash: 0000fb9e423b0dcc, Previous Hash: 000066660d103243, Timestamp: 2024-12-02T04:46:47.337]
 
-Attacker Chain: 11 Blocks
+Attacker Chain: 9 Blocks
 Blockchain is valid: All blocks are correctly linked and meet the difficulty requirements.
-Block 0 [Data: Genesis Block, Hash: 0000051106b2bd7c, Previous Hash: 0, Timestamp: 2024-11-19T23:09:18.103]
-Block 1 [Data: Transaction 1, Hash: 0000324cdafa6b82, Previous Hash: 0000051106b2bd7c, Timestamp: 2024-11-19T23:09:18.638]
-Block 2 [Data: Transaction 2, Hash: 0000c6dff6bb7a3a, Previous Hash: 0000324cdafa6b82, Timestamp: 2024-11-19T23:09:19.363]
-Block 3 [Data: Transaction 3, Hash: 000032777ad88572, Previous Hash: 0000c6dff6bb7a3a, Timestamp: 2024-11-19T23:09:20.128]
-Block 4 [Data: Transaction 4, Hash: 00001c7bde629153, Previous Hash: 000032777ad88572, Timestamp: 2024-11-19T23:09:21.563]
-Block 5 [Data: Transaction 5, Hash: 00003222c2a04145, Previous Hash: 00001c7bde629153, Timestamp: 2024-11-19T23:09:21.912]
-Block 6 [Data: Malicious Transaction 1, Hash: 00002acab6334f07, Previous Hash: 00003222c2a04145, Timestamp: 2024-11-19T23:09:22.151]
-Block 7 [Data: Malicious Transaction 2, Hash: 0000629bc3862f02, Previous Hash: 00002acab6334f07, Timestamp: 2024-11-19T23:09:27.357]
-Block 8 [Data: Malicious Transaction 3, Hash: 00009dcf215a78c8, Previous Hash: 0000629bc3862f02, Timestamp: 2024-11-19T23:09:27.936]
-Block 9 [Data: Malicious Transaction 4, Hash: 000063b9aeeadd15, Previous Hash: 00009dcf215a78c8, Timestamp: 2024-11-19T23:09:29.157]
-Block 10 [Data: Malicious Transaction 5, Hash: 000085c81c8a7c5e, Previous Hash: 000063b9aeeadd15, Timestamp: 2024-11-19T23:09:29.861]
+Block 0 [Data: Genesis Block, Hash: 000050bea341966f, Previous Hash: 0, Timestamp: 2024-12-02T04:46:40.143]
+Block 1 [Data: Transaction 1, Hash: 0000b865ae269a2e, Previous Hash: 000050bea341966f, Timestamp: 2024-12-02T04:46:40.804]
+Block 2 [Data: Transaction 2, Hash: 0000f4f6928be726, Previous Hash: 0000b865ae269a2e, Timestamp: 2024-12-02T04:46:41.496]
+Block 3 [Data: Transaction 3, Hash: 00002a374863fdcd, Previous Hash: 0000f4f6928be726, Timestamp: 2024-12-02T04:46:41.608]
+Block 4 [Data: Transaction 4, Hash: 00001032b4bb5715, Previous Hash: 00002a374863fdcd, Timestamp: 2024-12-02T04:46:42.031]
+Block 5 [Data: Transaction 5, Hash: 000066660d103243, Previous Hash: 00001032b4bb5715, Timestamp: 2024-12-02T04:46:47.166]
+Block 6 [Data: Bob is transferring 9.149 BTC to Charlie, Hash: 00003ec0021fae9d, Previous Hash: 000066660d103243, Timestamp: 2024-12-02T04:46:47.337]
+Block 7 [Data: Charlie is transferring 3.193 BTC to Dave, Hash: 0000340811e6d402, Previous Hash: 00003ec0021fae9d, Timestamp: 2024-12-02T04:46:51.971]
+Block 8 [Data: Grace is transferring 1.775 BTC to Dave, Hash: 000028b5fda4afc1, Previous Hash: 0000340811e6d402, Timestamp: 2024-12-02T04:46:58.216]
 ```
 - The resulting chain, with invalid blocks identified after the attack.
 ```
 The attacker's fork has become the valid chain!
 
 Invalid blocks after the attack (not found in the attacker's chain):
-Transaction: Original Transaction 1
-Transaction: Original Transaction 2
-Transaction: Original Transaction 3
+Transaction: Dave is transferring 2.808 BTC to Eve
 ```
 
 ## How the 51% Attack Simulation Works
