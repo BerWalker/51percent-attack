@@ -5,14 +5,12 @@ mod attack;
 use std::env;
 
 fn main() {
-    // Get the command-line arguments
-    let args: Vec<String> = env::args().collect();
+    // Get the difficulty argument from the command-line input, with a default value of 4 if not provided
+    let difficulty: usize = env::args()  // Collect command-line arguments into a vector
+        .nth(1)  // Get the second argument (first argument is the program name)
+        .and_then(|arg| arg.parse().ok())  // Attempt to parse the argument as a usize
+        .unwrap_or(4);  // If parsing fails, default to difficulty of 4
 
-    let difficulty = if args.len() > 1 {
-        args[1].parse::<usize>().unwrap()
-    } else {
-        4  // Default difficulty
-    };
-
+    // Simulate the 51% attack with the specified difficulty
     attack::simulate_51_attack(difficulty);
 }

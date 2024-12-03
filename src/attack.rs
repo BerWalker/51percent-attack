@@ -2,47 +2,50 @@ use crate::blockchain::Blockchain;
 use std::{
     sync::{Arc, Mutex, atomic::{AtomicBool, Ordering}},
     thread,
-    time,
+    time::Duration,
 };
 use rand::Rng;
 
-/// Function to generate random transactions with two participants and a random amount.
+/// Generates random transactions between two participants with a random amount.
 fn generate_random_transaction() -> String {
-    // List of generic names for the participants.
-    let names = vec!["Alice", "Bob", "Grace", "Eve", "Charlie", "Dave"];
-
-    // Generate two different random indices to select two people from the list.
+    // List of participants (fictional names).
+    let names = vec!["Alice", "Bob", "Charlie", "Dave", "Eve", "Frank", "Grace"];
     let mut rng = rand::thread_rng();
-    let sender_index = rng.gen_range(0..names.len());
-    let mut receiver_index = rng.gen_range(0..names.len());
 
-    // Ensure that the sender and the receiver are different
-    while sender_index == receiver_index {
-        receiver_index = rng.gen_range(0..names.len());
-    }
+    // Randomly selects the sender and receiver, ensuring they are different.
+    let sender_index = rng.gen_range(0..names.len());
+    let receiver_index = rng.gen_range(0..names.len());
+    let amount: f64 = rng.gen_range(0.001..=10.0); // Transaction amount between 0.001 and 10.0 coins.
+
+    // If the sender and receiver are the same, adjust the receiver index.
+    let receiver_index = if sender_index == receiver_index {
+        (receiver_index + 1) % names.len()
+    } else {
+        receiver_index
+    };
 
     let sender = names[sender_index];
     let receiver = names[receiver_index];
 
-    // Generate a random transfer amount between 0.001 and 10.0
-    let amount: f64 = rng.gen_range(0.001..=10.0);
-
-    format!("{} is transferring {:.3} BTC to {}", sender, amount, receiver)
+    // Returns a string representing the transaction.
+    format!("{} is transferring {:.3} Coins to {}", sender, amount, receiver)
 }
 
-/// Simulates a 51% attack
+/// Simulates a 51% attack, where the attacker attempts to outpace the original blockchain
+/// by creating a longer chain than the legitimate one.
 pub fn simulate_51_attack(difficulty: usize) {
+    // Creates the original chain with the provided difficulty level.
     let mut original_chain = Blockchain::new(difficulty);
 
-    // Adding 5 legitimate blocks to the original chain.
+    // Adds 5 legitimate blocks to the original chain.
     for i in 1..=5 {
         original_chain.add_block(&format!("Transaction {}", i));
     }
 
-    // Cloning the original chain to create the attacker's fork.
+    // Creates a copy of the original chain for the attacker's chain.
     let attacker_chain = original_chain.clone();
 
-    // Wrapping both chains in `Arc<Mutex>` for safe access by multiple threads.
+    // Uses Arc and Mutex to allow shared access between threads.
     let original_chain = Arc::new(Mutex::new(original_chain));
     let attacker_chain = Arc::new(Mutex::new(attacker_chain));
 
@@ -59,12 +62,15 @@ pub fn simulate_51_attack(difficulty: usize) {
             while !stop_flag.load(Ordering::Relaxed) {
                 let transaction = generate_random_transaction();
                 {
+                    // Adds a new block to the original chain.
                     let mut chain = original_chain.lock().unwrap();
                     chain.add_block(&transaction);
                     println!("Legitimate: Mining Block {}", i);
                 }
                 i += 1;
-                thread::sleep(time::Duration::from_secs(difficulty as u64 * difficulty as u64));
+
+                // Sleeps for a time proportional to the difficulty.
+                thread::sleep(Duration::from_secs(2u64.pow(difficulty as u32)));
             }
         })
     };
@@ -80,66 +86,75 @@ pub fn simulate_51_attack(difficulty: usize) {
             while !stop_flag.load(Ordering::Relaxed) {
                 let transaction = generate_random_transaction();
                 {
+                    // Adds a new block to the attacker's chain.
                     let mut attacker = attacker_chain.lock().unwrap();
                     attacker.add_block(&transaction);
                     println!("Attack: Mining Block {}", i);
                 }
 
-                // Check if the attacker's chain is longer.
-                let attacker_len;
-                let original_len;
-                {
+                // Only checks the chain lengths in a critical section to avoid race conditions.
+                let (attacker_len, original_len) = {
                     let attacker = attacker_chain.lock().unwrap();
                     let original = original_chain.lock().unwrap();
-                    attacker_len = attacker.chain.len();
-                    original_len = original.chain.len();
+                    (attacker.chain.len(), original.chain.len())
+                };
+
+                // If the attacker's chain becomes longer than the original, the attack is considered successful.
+                if attacker_len > original_len && original_len > 7 {
+                    stop_flag.store(true, Ordering::SeqCst);
                 }
 
-                if attacker_len > original_len + 1 {
-                    stop_flag.store(true, Ordering::Relaxed);
-                }
-
+                // Sleeps for a time proportional to the difficulty before continuing.
+                thread::sleep(Duration::from_secs((2u64.pow(difficulty as u32))/2));
                 i += 1;
-                thread::sleep(time::Duration::from_secs(difficulty as u64));
             }
         })
     };
 
-    // Wait for both threads to finish.
+    // Waits for both threads to finish.
     original_chain_thread.join().unwrap();
     attacker_chain_thread.join().unwrap();
 
-    // Access and print both chains after mining.
+    // After mining, accesses and prints both chains.
     let original_chain = original_chain.lock().unwrap();
     let attacker_chain = attacker_chain.lock().unwrap();
 
     println!("\nOriginal Chain: {} Blocks", original_chain.chain.len());
-    original_chain.is_valid();
-    original_chain.print_chain();
+    original_chain.is_valid();  // Validates the original chain.
+    original_chain.print_chain();  // Prints the blocks of the original chain.
 
     println!("\nAttacker Chain: {} Blocks", attacker_chain.chain.len());
-    attacker_chain.is_valid();
-    attacker_chain.print_chain();
+    attacker_chain.is_valid();  // Validates the attacker's chain.
+    attacker_chain.print_chain();  // Prints the blocks of the attacker's chain.
 
-    // Determine which chain is now considered valid based on length.
+    // Compares both chains to determine which one is valid.
     if attacker_chain.chain.len() > original_chain.chain.len() {
         println!("\nThe attacker's fork has become the valid chain!");
 
-        let mut invalidated_blocks = Vec::new();
+        // Identifies which blocks in the original chain were invalidated by the attack.
+        let invalidated_blocks: Vec<_> = original_chain
+            .chain
+            .iter()
+            .enumerate()
+            .filter_map(|(i, block)| {
+                // If the block in the attacker's chain is different, mark it as invalid.
+                if attacker_chain.chain.get(i).map_or(true, |attacker_block| attacker_block != block) {
+                    Some(block)
+                } else {
+                    None
+                }
+            })
+            .collect();
 
-        for i in 0..original_chain.chain.len() {
-            if original_chain.chain[i] != attacker_chain.chain[i] {
-                invalidated_blocks.push(&original_chain.chain[i]);
-            }
-        }
-
+        // If there are invalidated blocks, prints the transactions.
         if !invalidated_blocks.is_empty() {
-            println!("\nInvalid blocks after the attack (not found in the attacker's chain):");
+            println!("\nInvalid transactions after the attack (not found in the attacker's chain):");
             for block in invalidated_blocks {
                 println!("Transaction: {}", block.data);
             }
         }
     } else {
+        // If the original chain is longer or equal, it remains valid.
         println!("\nThe original chain remains valid.");
     }
 }
