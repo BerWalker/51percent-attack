@@ -92,3 +92,33 @@ impl fmt::Debug for Block {
         )
     }
 }
+
+#[cfg(test)]
+mod test_block {
+    use super::*;
+
+    #[test]
+    fn test_block_creation() {
+        let block = Block::new(0, "0", "Genesis Block");
+        assert_eq!(block.index, 0);
+        assert_eq!(block.previous_hash, "0");
+        assert_eq!(block.data, "Genesis Block");
+        assert_eq!(block.nonce, 0);
+        assert_eq!(block.hash, block.calculate_hash());
+        println!("{:?}", block);
+    }
+
+    #[test]
+    fn test_block_hashing() {
+        let block = Block::new(0, "0", "Genesis Block");
+        let hash = block.calculate_hash();
+        assert_eq!(block.hash, hash);
+    }
+
+    #[test]
+    fn test_block_mining() {
+        let mut block = Block::new(0, "0", "Genesis Block");
+        block.mine_block(4);  // Mine the block with difficulty 4
+        assert!(block.hash.starts_with("0000"));  // Check if the hash starts with 4 zeros
+    }
+}
