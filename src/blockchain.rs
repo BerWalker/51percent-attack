@@ -1,7 +1,7 @@
 use crate::block::Block;
 use std::vec::Vec;
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct Blockchain {
     pub chain: Vec<Block>,  // Vector of blocks that form the entire blockchain.
     pub difficulty: usize,  // Mining difficulty, represents the required number of leading zeros in the block hash.
@@ -87,5 +87,28 @@ impl Blockchain {
             // Prints the block's details using the Debug trait implementation.
             println!("{:?}", block);
         }
+    }
+}
+
+#[cfg(test)]
+mod test_blockchain {
+    use super::*;
+
+    #[test]
+    fn test_blockchain_creation() {
+        let blockchain = Blockchain::new(4);
+        assert_eq!(blockchain.chain.len(), 1);
+        assert_eq!(blockchain.difficulty, 4);
+        assert!(blockchain.is_valid());
+        println!("Blockchain: {:?}", blockchain);
+    }
+
+    #[test]
+    fn test_blockchain_add_block() {
+        let mut blockchain = Blockchain::new(4);
+        blockchain.add_block("First Block");
+        assert_eq!(blockchain.chain.len(), 2);
+        assert!(blockchain.is_valid());
+        println!("Blockchain: {:?}", blockchain);
     }
 }

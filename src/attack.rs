@@ -158,3 +158,20 @@ pub fn simulate_51_attack(difficulty: usize) {
         println!("\nThe original chain remains valid.");
     }
 }
+
+#[cfg(test)]
+mod test_attack {
+    use super::*;
+
+    #[test]
+    fn test_generate_random_transaction() {
+        let transaction = generate_random_transaction();
+        println!("Random Transaction: {}", transaction);
+        assert!(!transaction.is_empty());
+    }
+
+    #[test]
+    fn test_simulate_51_attack() {
+        simulate_51_attack(4);
+    }
+}
