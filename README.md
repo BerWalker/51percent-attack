@@ -69,6 +69,8 @@ cd 51percent-attack/
 
 ### 3. Build the Code
 
+> **Note:** Make sure a system C compiler (`cc`) is installed.
+
 Build the code with the following command:
 
 ```bash
